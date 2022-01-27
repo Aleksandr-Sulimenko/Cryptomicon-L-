@@ -69,14 +69,13 @@
 
       <template v-if="tickers.length > 0">
         <hr class="w-full border-t border-gray-600 my-4" />
-        {{ sel }}
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div
             v-for="t in tickers"
             :key="t"
             @click="sel = t"
             :class="{
-              'border-4':sel === t
+              'border-4': sel === t,
             }"
             class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
           >
@@ -160,21 +159,8 @@ export default {
 
   data() {
     return {
-      ticker: "default",
-      tickers: [
-        {
-          name: "DEMO1",
-          price: "-",
-        },
-        {
-          name: "DEMO2",
-          price: "-",
-        },
-        {
-          name: "DEMO3",
-          price: "-",
-        },
-      ],
+      ticker: "",
+      tickers: [],
       sel: null,
     };
   },
@@ -187,7 +173,15 @@ export default {
         price: "-",
       };
       this.tickers.push(newTicker);
-      this.ticker = "";
+      setInterval(async () => {
+        const f = await fetch(
+          `https://min-api.cryptocompare.com/data/price?fsym=${newTicker.name}&tsyms=USD&api_key=d4614669772e47a6b813f551a50d81607d94d3d82f9db18351fe1bd8b0c15d11`
+        );
+        const data = await f.json();
+        this.tickers.find(t => t.name === newTicker.name).price = data.USD;
+        // newTicker.price = data.USD;
+      }, 3000),
+        (this.ticker = "");
     },
     handleDelete(tickerToRemove) {
       this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
