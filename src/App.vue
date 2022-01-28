@@ -199,12 +199,10 @@ export default {
         (price) => 5 + ((price - minValue) * 95) / (maxValue - minValue)
       );
     },
-    select(t){
+    select(t) {
       this.sel = t;
       this.graph = [];
-    }
+    },
   },
 };
 </script>
-
-<style src="./app.css"></style>
