@@ -9,8 +9,8 @@
             >
             <div class="mt-1 relative rounded-md shadow-md">
               <input
-                v-on:keydown.enter="add"
                 v-model="ticker"
+                @keydown.enter="add"
                 type="text"
                 name="wallet"
                 id="wallet"
@@ -18,7 +18,7 @@
                 placeholder="Например DOGE"
               />
             </div>
-            <div
+            <!-- <div
               class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap"
             >
               <span
@@ -41,7 +41,7 @@
               >
                 CHD
               </span>
-            </div>
+            </div> -->
             <div class="text-sm text-red-600">Такой тикер уже добавлен</div>
           </div>
         </div>
@@ -67,7 +67,7 @@
         </button>
       </section>
 
-      <template v-if="tickers.length > 0">
+      <template v-if="tickers.length">
         <hr class="w-full border-t border-gray-600 my-4" />
         <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div
@@ -170,12 +170,24 @@ export default {
 
   methods: {
     add() {
-      // if(evt.key === "Enter"){}
       const currentTicker = {
         name: this.ticker,
         price: "-",
       };
-      this.tickers.push(currentTicker);
+      if (this.tickers.length === 0) {
+        console.log(this.tickers);
+        this.tickers.push(currentTicker);
+      } else {
+        this.tickers.forEach((ticker) => {
+          if (ticker.name !== currentTicker.name) {
+            this.tickers.push(currentTicker);
+          } else {
+            console.log(1111);
+            console.log(currentTicker.name);
+          }
+        });
+      }
+
       setInterval(async () => {
         const f = await fetch(
           `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=d4614669772e47a6b813f551a50d81607d94d3d82f9db18351fe1bd8b0c15d11`
@@ -186,8 +198,9 @@ export default {
         if (this.sel?.name === currentTicker.name) {
           this.graph.push(data.USD);
         }
-      }, 10000),
+      }, 13000),
         (this.ticker = "");
+      return this.ticker;
     },
     handleDelete(tickerToRemove) {
       this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
@@ -199,10 +212,17 @@ export default {
         (price) => 5 + ((price - minValue) * 95) / (maxValue - minValue)
       );
     },
-    select(t) {
-      this.sel = t;
+    select(ticker) {
+      this.sel = ticker;
       this.graph = [];
     },
+  },
+  async mounted() {
+    const coin = await fetch(
+      `https://min-api.cryptocompare.com/data/all/coinlist?summary=true`
+    );
+    const coinList = await coin.json();
+    console.log(coinList);
   },
 };
 </script>
