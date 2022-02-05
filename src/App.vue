@@ -42,7 +42,9 @@
                 CHD
               </span>
             </div> -->
-            <div class="text-sm text-red-600">Такой тикер уже добавлен</div>
+            <div v-if="tickerAdded" class="text-sm text-red-600">
+              Такой тикер уже добавлен
+            </div>
           </div>
         </div>
         <button
@@ -165,6 +167,7 @@ export default {
       tickers: [],
       sel: null,
       graph: [],
+      tickerAdded: false,
     };
   },
 
@@ -174,19 +177,34 @@ export default {
         name: this.ticker,
         price: "-",
       };
-      if (this.tickers.length === 0) {
-        console.log(this.tickers);
+      if (!this.tickers.length) {
+        // console.log(this.tickers);
         this.tickers.push(currentTicker);
-      } else {
-        this.tickers.forEach((ticker) => {
-          if (ticker.name !== currentTicker.name) {
-            this.tickers.push(currentTicker);
+      }
+      if (this.tickers.length) {
+        this.tickers.find((element) => {
+          console.log(element.name, this.ticker);
+          if (element.name === this.ticker) {
+            // this.tickerAdded = true;
+            console.log(111, this.tickers);
           } else {
-            console.log(1111);
-            console.log(currentTicker.name);
+            console.log(currentTicker);
+            this.tickers.push(currentTicker);
+            console.log(222, this.tickers);
           }
         });
       }
+
+      // } else {
+      //   this.tickers.forEach((ticker) => {
+      //     if (ticker.name !== currentTicker.name) {
+      //       this.tickers.push(currentTicker);
+      //     } else {
+      //       console.log(1111);
+      //       console.log(currentTicker.name);
+      //     }
+      //   });
+      // }
 
       setInterval(async () => {
         const f = await fetch(
@@ -223,6 +241,18 @@ export default {
     );
     const coinList = await coin.json();
     console.log(coinList);
+  },
+
+  watch: {
+    ticker() {
+      this.tickers.forEach((element) => {
+        if (element.name === this.ticker) {
+          this.tickerAdded = true;
+        } else {
+          this.tickerAdded = false;
+        }
+      });
+    },
   },
 };
 </script>
