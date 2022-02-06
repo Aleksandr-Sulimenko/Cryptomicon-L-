@@ -146,6 +146,7 @@
         <button
           @click="sel = null"
           type="button"
+          cn
           class="absolute top-0 right-0"
         >
           <svg
@@ -179,19 +180,6 @@
 export default {
   name: "App",
 
-  data() {
-    return {
-      ticker: "",
-      tickers: [],
-      sel: null,
-      graph: [],
-      page: 1,
-      filter: "",
-      hasNextPage: true,
-      tickerAdded: false,
-    };
-  },
-
   created() {
     const windowData = Object.fromEntries(
       new URL(window.location).searchParams.entries()
@@ -202,6 +190,7 @@ export default {
     if (windowData.page) {
       this.page = windowData.page;
     }
+    // localStorage.removeItem("cryptomicon-list");
 
     const tickersData = localStorage.getItem("cryptomicon-list");
     if (tickersData) {
@@ -212,19 +201,20 @@ export default {
       });
     }
   },
+  data() {
+    return {
+      ticker: "",
+      tickers: [],
+      sel: null,
+      graph: [],
+      page: 1,
+      filter: "",
+      hasNextPage: false,
+      tickerAdded: false,
+    };
+  },
 
   methods: {
-    filteredTickers() {
-      const start = (this.page - 1) * 6;
-      const end = this.page * 6;
-      const filteredTickers = this.tickers.filter((ticker) =>
-        ticker.name.includes(this.filter)
-      );
-      this.hasNextPage = filteredTickers.length > end;
-      console.log(filteredTickers.length, end);
-
-      return filteredTickers.slice(start, end);
-    },
     subscribeToUpdates(tickerName) {
       setInterval(async () => {
         const f = await fetch(
@@ -236,56 +226,69 @@ export default {
         if (this.sel?.name === tickerName) {
           this.graph.push(data.USD);
         }
-      }, 100000)((this.ticker = ""));
-      return this.ticker;
+      }, 100000);
+      this.ticker = "";
+      // return this.ticker;
     },
-  },
 
-  add() {
-    const currentTicker = {
-      name: this.ticker,
-      price: "-",
-    };
+    add() {
+      const currentTicker = {
+        name: this.ticker,
+        price: "-",
+      };
 
-    this.tickers.push(currentTicker);
-    localStorage.setItem("cryptomicon-list", JSON.stringify(this.tickers));
-    this.subscribeToUpdates(currentTicker.name);
-    this.filter = "";
-
-    if (!this.tickers.length) {
-      // console.log(this.tickers);
       this.tickers.push(currentTicker);
-    }
-    if (this.tickers.length) {
-      this.tickers.find((element) => {
-        console.log(element.name, this.ticker);
-        if (element.name === this.ticker) {
-          // this.tickerAdded = true;
-          console.log(111, this.tickers);
-        } else {
-          console.log(currentTicker);
-          this.tickers.push(currentTicker);
-          console.log(222, this.tickers);
-        }
-      });
-    }
-  },
+      localStorage.setItem("cryptomicon-list", JSON.stringify(this.tickers));
+      this.subscribeToUpdates(currentTicker.name);
+      this.filter = "";
+      this.page = 1;
 
-  handleDelete(tickerToRemove) {
-    this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
-  },
+      if (!this.tickers.length) {
+        console.log(this.tickers);
+        this.tickers.push(currentTicker);
+      }
+      if (this.tickers.length) {
+        this.tickers.find((element) => {
+          console.log(element.name, this.ticker);
+          if (element.name === this.ticker) {
+            // this.tickerAdded = true;
+            console.log(111, this.tickers);
+          } else {
+            console.log(currentTicker);
+            this.tickers.push(currentTicker);
+            console.log(222, this.tickers);
+          }
+        });
+      }
+    },
+    filteredTickers() {
+      const start = (this.page - 1) * 6;
+      const end = this.page * 6;
+      const filteredTickers = this.tickers.filter((ticker) =>
+        ticker.name.includes(this.filter)
+      );
+      this.hasNextPage = filteredTickers.length > end;
+      console.log(filteredTickers.length, end);
 
-  normalizeGraph() {
-    const maxValue = Math.max(...this.graph);
-    const minValue = Math.min(...this.graph);
-    return this.graph.map(
-      (price) => 5 + ((price - minValue) * 95) / (maxValue - minValue)
-    );
-  },
+      return filteredTickers.slice(start, end);
+    },
 
-  select(t) {
-    this.sel = t;
-    this.graph = [];
+    handleDelete(tickerToRemove) {
+      this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
+    },
+
+    normalizeGraph() {
+      const maxValue = Math.max(...this.graph);
+      const minValue = Math.min(...this.graph);
+      return this.graph.map(
+        (price) => 5 + ((price - minValue) * 95) / (maxValue - minValue)
+      );
+    },
+
+    select(t) {
+      this.sel = t;
+      this.graph = [];
+    },
   },
 
   watch: {
@@ -309,8 +312,10 @@ export default {
       this.tickers.forEach((element) => {
         if (element.name === this.ticker) {
           this.tickerAdded = true;
+          console.log(1);
         } else {
           this.tickerAdded = false;
+          console.log(11);
         }
       });
     },
