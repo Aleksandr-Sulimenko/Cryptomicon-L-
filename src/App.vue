@@ -95,7 +95,7 @@
             :key="t"
             @click="select(t)"
             :class="{
-              'border-4': sel === t,
+              'border-4': selectedTicker === t,
             }"
             class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
           >
@@ -131,9 +131,9 @@
         <hr class="w-full border-t border-gray-600 my-4" />
       </template>
 
-      <section v-if="sel" class="relative">
+      <section v-if="selectedTicker" class="relative">
         <h3 class="text-lg leading-6 font-medium text-gray-900 my-8">
-          {{ sel.name }} - USD
+          {{ selectedTicker.name }} - USD
         </h3>
         <div class="flex items-end border-gray-600 border-b border-l h-64">
           <div
@@ -144,7 +144,7 @@
           ></div>
         </div>
         <button
-          @click="sel = null"
+          @click="selectedTicker = null"
           type="button"
           cn
           class="absolute top-0 right-0"
@@ -186,7 +186,7 @@ export default {
       filter: "",
 
       tickers: [],
-      sel: null,
+      selectedTicker: null,
 
       graph: [],
       page: 1,
@@ -260,7 +260,7 @@ export default {
         const data = await f.json();
         this.tickers.find((t) => t.name === tickerName).price =
           data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
-        if (this.sel?.name === tickerName) {
+        if (this.selectedTicker?.name === tickerName) {
           this.graph.push(data.USD);
         }
       }, 100000);
@@ -289,15 +289,27 @@ export default {
 
     handleDelete(tickerToRemove) {
       this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
+      if (this.selectedTicker) {
+        this.selectedTicker = null;
+      }
     },
 
     select(t) {
-      this.sel = t;
-      this.graph = [];
+      this.selectedTicker = t;
     },
   },
 
   watch: {
+    selectedTicker() {
+      this.graph = [];
+    },
+
+    paginatedTickers() {
+      if (this.paginatedTickers.length === 0 && this.page > 1) {
+        this.page = this.page - 1;
+      }
+    },
+
     filter() {
       this.page = 1;
       window.history.pushState(
