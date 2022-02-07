@@ -263,7 +263,7 @@ export default {
         if (this.selectedTicker?.name === tickerName) {
           this.graph.push(data.USD);
         }
-      }, 100000);
+      }, 10000);
       this.ticker = "";
       // return this.ticker;
     },
@@ -274,16 +274,15 @@ export default {
         price: "-",
       };
 
-      localStorage.setItem("cryptomicon-list", JSON.stringify(this.tickers));
       this.subscribeToUpdates(currentTicker.name);
       this.filter = "";
       this.page = 1;
 
       if (!this.tickers.length) {
         console.log(this.tickers);
-        this.tickers.push(currentTicker);
+        this.tickers = [...this.tickers, currentTicker];
       } else if (this.tickerAdded === false) {
-        this.tickers.push(currentTicker);
+        this.tickers = [...this.tickers, currentTicker];
       }
     },
 
@@ -334,6 +333,9 @@ export default {
           return (this.tickerAdded = true);
         }
       });
+    },
+    tickers() {
+      localStorage.setItem("cryptomicon-list", JSON.stringify(this.tickers));
     },
   },
 
