@@ -104,7 +104,7 @@
                 {{ t.name }} - USD
               </dt>
               <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                {{ t.price }}
+                {{ formatedPrice(t.price) }}
               </dd>
             </div>
             <div class="w-full border-t border-gray-200"></div>
@@ -177,7 +177,7 @@
 </template>
 
 <script>
-import { loadTicker } from "./api";
+import { subscribeToTicker } from "./api";
 
 export default {
   name: "App",
@@ -201,22 +201,33 @@ export default {
     const windowData = Object.fromEntries(
       new URL(window.location).searchParams.entries()
     );
-    if (windowData.filter) {
-      this.filter = windowData.filter;
-    }
-    if (windowData.page) {
-      this.page = windowData.page;
-    }
+    const VALID_KEYS = ["filter, page"];
+
+    VALID_KEYS.forEach((key) => {
+      if (windowData[key]) {
+        this[key] = windowData[key];
+      }
+    });
+    // if (windowData.filter) {
+    //   this.filter = windowData.filter;
+    // }
+    // if (windowData.page) {
+    //   this.page = windowData.page;
+    // }
     // localStorage.removeItem("cryptomicon-list");
 
     const tickersData = localStorage.getItem("cryptomicon-list");
     if (tickersData) {
       this.tickers = JSON.parse(tickersData);
-      // console.log(tickersData);
+      console.log(tickersData);
       this.tickers.forEach((ticker) => {
-        this.subscribeToUpdates(ticker.name);
+        subscribeToTicker(ticker.name, (newPrice) =>
+          this.updateTicker(ticker.name, newPrice)
+        );
       });
     }
+    setInterval(this.updateTickers, 10000);
+    //если не Vue то: setInterval(() => this.updateTickers(), 10000)
   },
 
   computed: {
@@ -261,20 +272,25 @@ export default {
   },
 
   methods: {
-    subscribeToUpdates(tickerName) {
-      setInterval(async () => {
-        const exchangeData = await loadTicker(tickerName);
+    updateTicker(tickerName, price) {
+      this.tickers
+        .filter((t) => t.name === tickerName)
+        .forEach((t) => {
+          t.price === price;
+        });
+      if (!this.selectedTicker) {
+        return;
+      } else {
+        this.graph.push(this.selectedTicker.price);
+      }
+    },
 
-        this.tickers.find((t) => t.name === tickerName).price =
-          exchangeData.USD > 1
-            ? exchangeData.USD.toFixed(2)
-            : exchangeData.USD.toPrecision(2);
-        if (this.selectedTicker?.name === tickerName) {
-          this.graph.push(exchangeData.USD);
-        }
-      }, 10000);
-      this.ticker = "";
-      // return this.ticker;
+    formatedPrice(price) {
+      if (price === "-") {
+        return price;
+      } else {
+        return price > 1 ? price.toFixed(2) : price.toPrecision(2);
+      }
     },
 
     add() {
@@ -282,17 +298,17 @@ export default {
         name: this.ticker,
         price: "-",
       };
-
-      this.subscribeToUpdates(currentTicker.name);
-      this.filter = "";
-      this.page = 1;
+      // console.log(this.ticker.name);
 
       if (!this.tickers.length) {
-        console.log(this.tickers);
         this.tickers = [...this.tickers, currentTicker];
       } else if (this.tickerAdded === false) {
         this.tickers = [...this.tickers, currentTicker];
       }
+      this.filter = "";
+      subscribeToTicker(this.ticker.name, (newPrice) =>
+        this.updateTicker(this.ticker.name, newPrice)
+      );
     },
 
     handleDelete(tickerToRemove) {
@@ -336,9 +352,8 @@ export default {
     },
     ticker() {
       this.tickerAdded = false;
-      this.tickers.forEach((element, i) => {
-        if (element.name === this.ticker) {
-          console.log(i);
+      this.tickers.forEach((element) => {
+        if (element.name.toUpperCase() === this.ticker) {
           return (this.tickerAdded = true);
         }
       });
