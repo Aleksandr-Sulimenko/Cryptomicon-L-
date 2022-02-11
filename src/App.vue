@@ -104,7 +104,7 @@
                 {{ t.name }} - USD
               </dt>
               <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                {{ formatedPrice(t.price) }}
+                {{ formatPrice(t.price) }}
               </dd>
             </div>
             <div class="w-full border-t border-gray-200"></div>
@@ -219,29 +219,17 @@ export default {
     const tickersData = localStorage.getItem("cryptomicon-list");
     if (tickersData) {
       this.tickers = JSON.parse(tickersData);
-      console.log(tickersData);
       this.tickers.forEach((ticker) => {
         subscribeToTicker(ticker.name, (newPrice) =>
           this.updateTicker(ticker.name, newPrice)
         );
       });
     }
-    setInterval(this.updateTickers, 10000);
+    setInterval(this.updateTickers, 3000);
     //если не Vue то: setInterval(() => this.updateTickers(), 10000)
   },
 
   computed: {
-    normalizedGraph() {
-      const maxValue = Math.max(...this.graph);
-      const minValue = Math.min(...this.graph);
-      if (maxValue === minValue) {
-        return this.graph.map(() => 50);
-      }
-      return this.graph.map(
-        (price) => 5 + ((price - minValue) * 95) / (maxValue - minValue)
-      );
-    },
-
     startIndex() {
       return (this.page - 1) * 6;
     },
@@ -263,6 +251,18 @@ export default {
       return this.filteredTickers.length > this.endIndex;
     },
 
+    normalizedGraph() {
+      const maxValue = Math.max(...this.graph);
+      const minValue = Math.min(...this.graph);
+
+      if (maxValue === minValue) {
+        return this.graph.map(() => 50);
+      }
+
+      return this.graph.map(
+        (price) => 5 + ((price - minValue) * 95) / (maxValue - minValue)
+      );
+    },
     pageStateOptions() {
       return {
         page: this.page,
@@ -276,21 +276,22 @@ export default {
       this.tickers
         .filter((t) => t.name === tickerName)
         .forEach((t) => {
-          t.price === price;
+          if (t === this.selectedTicker) {
+            this.graph.push(price);
+          }
+          t.price = price;
+
+          // if (!this.selectedTicker) {
+          //   return;
+          // }
         });
-      if (!this.selectedTicker) {
-        return;
-      } else {
-        this.graph.push(this.selectedTicker.price);
-      }
     },
 
-    formatedPrice(price) {
+    formatPrice(price) {
       if (price === "-") {
         return price;
-      } else {
-        return price > 1 ? price.toFixed(2) : price.toPrecision(2);
       }
+      return price > 1 ? price.toFixed(2) : price.toPrecision(2);
     },
 
     add() {
@@ -302,15 +303,18 @@ export default {
       if (!this.tickers.length) {
         this.tickers = [...this.tickers, currentTicker];
       }
+      if (this.tickerAdded === false) {
+        this.tickers = [...this.tickers, currentTicker];
+      }
       this.filter = "";
       this.ticker = "";
       subscribeToTicker(currentTicker.name, (newPrice) =>
         this.updateTicker(currentTicker.name, newPrice)
       );
+    },
 
-      if (this.tickerAdded === false) {
-        this.tickers = [...this.tickers, currentTicker];
-      }
+    select(t) {
+      this.selectedTicker = t;
     },
 
     handleDelete(tickerToRemove) {
@@ -319,10 +323,6 @@ export default {
         this.selectedTicker = null;
       }
       unsubscribeFromTicker(tickerToRemove.name);
-    },
-
-    select(t) {
-      this.selectedTicker = t;
     },
   },
 
@@ -339,11 +339,6 @@ export default {
 
     filter() {
       this.page = 1;
-      // window.history.pushState(
-      //   null,
-      //   document.title,
-      //   `${window.location.pathname}?filter=${this.filter}&page=${this.page}`
-      // );
     },
 
     pageStateOptions(value) {
@@ -361,17 +356,18 @@ export default {
         }
       });
     },
-    tickers() {
+    tickers(newValue, oldValue) {
+      console.log(newValue === oldValue);
       localStorage.setItem("cryptomicon-list", JSON.stringify(this.tickers));
     },
   },
 
-  async mounted() {
-    const coin = await fetch(
-      `https://min-api.cryptocompare.com/data/all/coinlist?summary=true`
-    );
-    const coinList = await coin.json();
-    console.log(coinList);
-  },
+  // async mounted() {
+  //   const coin = await fetch(
+  //     `https://min-api.cryptocompare.com/data/all/coinlist?summary=true`
+  //   );
+  //   const coinList = await coin.json();
+  //   console.log(coinList);
+  // },
 };
 </script>
