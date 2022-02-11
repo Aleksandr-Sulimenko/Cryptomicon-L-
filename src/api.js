@@ -34,12 +34,13 @@ export const subscribeToTicker = (ticker, cd) => {
   tickersHandlers.set(ticker, [...subscribers, cd]);
 };
 
-export const unsubscribeFromTicker = (ticker, cd) => {
-  const subscribers = tickersHandlers.get(ticker) || [];
-  tickersHandlers.set(
-    ticker,
-    subscribers.filter((fn) => fn !== cd)
-  );
+export const unsubscribeFromTicker = (ticker) => {
+  tickersHandlers.delete(ticker);
+  // const subscribers = tickersHandlers.get(ticker) || [];
+  // tickersHandlers.set(
+  //   ticker,
+  //   subscribers.filter((fn) => fn !== cd)
+  // );
 };
 window.tickersHandlers = tickersHandlers;
 

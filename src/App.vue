@@ -177,7 +177,7 @@
 </template>
 
 <script>
-import { subscribeToTicker } from "./api";
+import { subscribeToTicker, unsubscribeFromTicker } from "./api";
 
 export default {
   name: "App",
@@ -299,16 +299,18 @@ export default {
         price: "-",
       };
       // console.log(this.ticker.name);
-
       if (!this.tickers.length) {
-        this.tickers = [...this.tickers, currentTicker];
-      } else if (this.tickerAdded === false) {
         this.tickers = [...this.tickers, currentTicker];
       }
       this.filter = "";
-      subscribeToTicker(this.ticker.name, (newPrice) =>
-        this.updateTicker(this.ticker.name, newPrice)
+      this.ticker = "";
+      subscribeToTicker(currentTicker.name, (newPrice) =>
+        this.updateTicker(currentTicker.name, newPrice)
       );
+
+      if (this.tickerAdded === false) {
+        this.tickers = [...this.tickers, currentTicker];
+      }
     },
 
     handleDelete(tickerToRemove) {
@@ -316,6 +318,7 @@ export default {
       if (this.selectedTicker) {
         this.selectedTicker = null;
       }
+      unsubscribeFromTicker(tickerToRemove.name);
     },
 
     select(t) {
